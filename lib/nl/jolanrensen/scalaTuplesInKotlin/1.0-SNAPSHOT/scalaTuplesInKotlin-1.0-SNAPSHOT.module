@@ -1,0 +1,142 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "nl.jolanrensen",
+    "module": "scalaTuplesInKotlin",
+    "version": "1.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.8.3",
+      "buildId": "3kdol3jtyfgsrky2s2cfexemze"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "scalaTuplesInKotlin-1.0-SNAPSHOT.jar",
+          "url": "scalaTuplesInKotlin-1.0-SNAPSHOT.jar",
+          "size": 258496,
+          "sha512": "dbcf6e3bb3940690dd290d01a599cc75143bb7b77ec59b4651037cc0ab1a1c96b91b7513a7917744e5d79007e93d78acf19a695d2fe0da38e80e99031a363560",
+          "sha256": "61b4c582e62b4eee042c0aee542146b3f0f8773c3565bf3a931a2a5b74775c40",
+          "sha1": "4f63e3e575610e3681c9528b9c5b9bbae1ada5bf",
+          "md5": "2a79ecf452164461117aca35d96f8f31"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.4.32"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-reflect",
+          "version": {
+            "requires": "1.4.32"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-script-runtime",
+          "version": {
+            "requires": "1.4.32"
+          }
+        },
+        {
+          "group": "org.scala-lang",
+          "module": "scala-library",
+          "version": {
+            "requires": "2.12.10"
+          }
+        },
+        {
+          "group": "org.scala-lang",
+          "module": "scala-reflect",
+          "version": {
+            "requires": "2.12.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scalaTuplesInKotlin-1.0-SNAPSHOT.jar",
+          "url": "scalaTuplesInKotlin-1.0-SNAPSHOT.jar",
+          "size": 258496,
+          "sha512": "dbcf6e3bb3940690dd290d01a599cc75143bb7b77ec59b4651037cc0ab1a1c96b91b7513a7917744e5d79007e93d78acf19a695d2fe0da38e80e99031a363560",
+          "sha256": "61b4c582e62b4eee042c0aee542146b3f0f8773c3565bf3a931a2a5b74775c40",
+          "sha1": "4f63e3e575610e3681c9528b9c5b9bbae1ada5bf",
+          "md5": "2a79ecf452164461117aca35d96f8f31"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scalaTuplesInKotlin-1.0-SNAPSHOT-javadoc.jar",
+          "url": "scalaTuplesInKotlin-1.0-SNAPSHOT-javadoc.jar",
+          "size": 261,
+          "sha512": "7eeaaf145e437d893c9ddfb3e477da5be35467123d523c1c3ccbdce2e2d899b634bcb526ea73f2acf23be4fe598b244cf2e2c756517b323df9d084cbe267b56d",
+          "sha256": "45c7af3e5f6a602bcf53dffdae7c010b0755b73602c8987e7d6acee072c84447",
+          "sha1": "f7b33ae797bbc4726bdad21651515f921a7c8907",
+          "md5": "03a1d08752cc2b170c397b9f5c0924a7"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scalaTuplesInKotlin-1.0-SNAPSHOT-sources.jar",
+          "url": "scalaTuplesInKotlin-1.0-SNAPSHOT-sources.jar",
+          "size": 29299,
+          "sha512": "79df667283bc6f016a965ece580f9b54cc9439aa508b7e3248e05c59cfb156ce589a6dcece7f979c96cc066ffae4385de2e0bc5465b4cf0bd4dd93e5156609e7",
+          "sha256": "9377a6dc71ab2dfa4410a1763022988eb0a87529fd71ba261c7b64538f6d9fa2",
+          "sha1": "98397e0ab2a6ee04f17f466bb8e3e29d6874dace",
+          "md5": "8701d74b3b06dc01238258b1ac977a39"
+        }
+      ]
+    }
+  ]
+}
