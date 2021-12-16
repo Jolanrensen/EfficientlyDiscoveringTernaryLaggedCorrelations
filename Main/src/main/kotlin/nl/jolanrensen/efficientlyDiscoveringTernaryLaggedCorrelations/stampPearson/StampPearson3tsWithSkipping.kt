@@ -12,6 +12,7 @@ import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPears
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.F64FlatArray
 import org.jetbrains.bio.viktor._I
+import org.jetbrains.bio.viktor.asF64Array
 import org.jtransforms.fft.DoubleFFT_1D
 import java.io.Serializable
 import kotlin.math.abs
@@ -78,6 +79,90 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
     )
 
     /**
+     * Find the best correlation between 3 time series for each possible window position in each. ([DoubleArray] variant)
+     *
+     * @param timeSeriesA First time series (must have the smallest amount of `NaN`s if any).
+     * @param timeSeriesB Second time series (must have the second to smallest amount of `NaN`s if any).
+     * @param timeSeriesC Third time series (will be split first) (must have the largest amount of `NaN`s if any).
+     * @param windowSize, also called `m`, the window size used to traverse all three time series.
+     * @param reducer Defines whether to find the highest or lowest correlation.
+     *      In practice this is either [MIN] or [MAX]. Defaults to [MAX].
+     *
+     * @param timeSeriesAWithoutNaN Optional, but if any continuity is removed from [timeSeriesA], this needs to be supplied.
+     * @param timeSeriesBWithoutNaN Optional, but if any continuity is removed from [timeSeriesB], this needs to be supplied.
+     * @param timeSeriesCWithoutNaN Optional, but if any continuity is removed from [timeSeriesC], this needs to be supplied.
+     *
+     * @param timeSeriesAWithoutNaNSlidingMeans Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesA]. NOTE: As the name suggests, if [timeSeriesA] contains `NaN`s,
+     *      use [timeSeriesAWithoutNaN] to calculate it.
+     * @param timeSeriesAWithoutNaNSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesA]. NOTE: As the name suggests, if [timeSeriesA] contains `NaN`s,
+     *      use [timeSeriesAWithoutNaN] to calculate it.
+     * @param timeSeriesBSlidingMeans Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesB]. It doesn't matter whether [timeSeriesB] has any `NaN`s.
+     * @param timeSeriesBSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesB]. It doesn't matter whether [timeSeriesB] has any `NaN`s.
+     * @param timeSeriesCSlidingMeans Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesC]. It doesn't matter whether [timeSeriesC] has any `NaN`s.
+     * @param timeSeriesCSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
+     *      [timeSeriesC]. It doesn't matter whether [timeSeriesC] has any `NaN`s.
+     *
+     * @param lagBound Optional enveloping mechanism. If provided, all window placements are within [lagBound] distance of each other.
+     * @param resultCubeCallback Optional matrix that can be provided to be filled with all results.
+     *      It's faster when not provided. Matrix must be of dimensions
+     *      ([timeSeriesC]`.size` - [windowSize] + 1,
+     *          [timeSeriesB]`.size` - [windowSize] + 1,
+     *          [timeSeriesA]`.size` - [windowSize] + 1).
+     * @param resultIndexCallback Optional callback function that can be provided which will be called before
+     *      [massPearson3dCube] returns with the indices and aggregation method of the best found correlation.
+     *
+     * @return The value of the best (according to [reducer]) correlation found between the three given time series.
+     */
+    @JvmOverloads
+    fun stampPearson3ts(
+        timeSeriesA: DoubleArray,
+        timeSeriesB: DoubleArray,
+        timeSeriesC: DoubleArray, // will be split first
+        windowSize: Int,
+        reducer: AggregationWithReducerWithArgWithCompare = MAX,
+
+        timeSeriesAWithoutNaN: DoubleArray? = null,
+        timeSeriesBWithoutNaN: DoubleArray? = null,
+        timeSeriesCWithoutNaN: DoubleArray? = null,
+
+        timeSeriesAWithoutNaNSlidingMeans: DoubleArray? = null,
+        timeSeriesAWithoutNaNSlidingStds: DoubleArray? = null,
+        timeSeriesBSlidingMeans: DoubleArray? = null,
+        timeSeriesBSlidingStds: DoubleArray? = null,
+        timeSeriesCSlidingMeans: DoubleArray? = null,
+        timeSeriesCSlidingStds: DoubleArray? = null,
+
+        lagBound: Int? = null,
+
+        // get optional result matrix
+        resultCubeCallback: F64Array? = null,
+        resultIndexCallback: ((aggregation: AggregationMethod, aIndex: Int, bIndex: Int, cIndex: Int) -> Unit)? = null,
+    ): Double = stampPearson3ts(
+        timeSeriesA = timeSeriesA.asF64Array(),
+        timeSeriesB = timeSeriesB.asF64Array(),
+        timeSeriesC = timeSeriesC.asF64Array(),
+        windowSize = windowSize,
+        reducer = reducer,
+        timeSeriesAWithoutNaN = timeSeriesAWithoutNaN?.asF64Array(),
+        timeSeriesBWithoutNaN = timeSeriesBWithoutNaN?.asF64Array(),
+        timeSeriesCWithoutNaN = timeSeriesCWithoutNaN?.asF64Array(),
+        timeSeriesAWithoutNaNSlidingMeans = timeSeriesAWithoutNaNSlidingMeans?.asF64Array(),
+        timeSeriesAWithoutNaNSlidingStds = timeSeriesAWithoutNaNSlidingStds?.asF64Array(),
+        timeSeriesBSlidingMeans = timeSeriesBSlidingMeans?.asF64Array(),
+        timeSeriesBSlidingStds = timeSeriesBSlidingStds?.asF64Array(),
+        timeSeriesCSlidingMeans = timeSeriesCSlidingMeans?.asF64Array(),
+        timeSeriesCSlidingStds = timeSeriesCSlidingStds?.asF64Array(),
+        lagBound = lagBound,
+        resultCubeCallback = resultCubeCallback,
+        resultIndexCallback = resultIndexCallback,
+    )
+
+    /**
      * Find the best correlation between 3 time series for each possible window position in each.
      *
      * @param timeSeriesA First time series (must have the smallest amount of `NaN`s if any).
@@ -114,6 +199,7 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
      *          [timeSeriesA]`.size` - [windowSize] + 1).
      * @param resultIndexCallback Optional callback function that can be provided which will be called before
      *      [massPearson3dCube] returns with the indices and aggregation method of the best found correlation.
+     *
      * @return The value of the best (according to [reducer]) correlation found between the three given time series.
      */
     @JvmOverloads

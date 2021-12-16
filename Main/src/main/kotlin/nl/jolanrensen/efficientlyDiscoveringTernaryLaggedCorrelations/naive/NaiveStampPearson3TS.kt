@@ -7,9 +7,25 @@ import org.jetbrains.bio.viktor.F64FlatArray
 import java.io.Serializable
 import kotlin.math.abs
 
-object NaiveStampPearson3TS : Serializable {
+/**
+ * Contains exhausive (naive) lagged ternary Pearson correlation functions with optional lag bound.
+ *
+ */
+object NaiveStampPearson3ts : Serializable {
 
-    // lagbound
+    /**
+     * Find the best correlation between 3 time series for each possible window position in each.
+     *
+     * @param timeSeriesA First time series.
+     * @param timeSeriesB Second time series.
+     * @param timeSeriesC Third time series (will be split first).
+     * @param windowSize, also called `m`, the window size used to traverse all three time series.
+     * @param reducer Defines whether to find the highest or lowest correlation.
+     *      In practice this is either [MIN] or [MAX]. Defaults to [MAX].
+     * @param lagBound Optional enveloping mechanism. If provided, all window placements are within [lagBound] distance of each other.
+     *
+     * @return The value of the best (according to [reducer]) correlation found between the three given time series.
+     */
     fun pearson3dCube(
         timeSeriesA: F64FlatArray,
         timeSeriesB: F64FlatArray,

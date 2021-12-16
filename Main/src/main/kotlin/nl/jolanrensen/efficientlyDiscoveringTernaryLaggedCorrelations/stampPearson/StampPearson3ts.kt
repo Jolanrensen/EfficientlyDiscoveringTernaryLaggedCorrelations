@@ -63,9 +63,9 @@ class StampPearson3ts @JvmOverloads constructor(
      * Find the best correlation between 3 time series for each possible window position in each.
      * ([DoubleArray] version)
      *
-     * @param timeSeriesA First time series (must have the smallest amount of `NaN`s if any).
-     * @param timeSeriesB Second time series (must have the second to smallest amount of `NaN`s if any).
-     * @param timeSeriesC Third time series (will be split first) (must have the largest amount of `NaN`s if any).
+     * @param timeSeriesA First time series.
+     * @param timeSeriesB Second time series.
+     * @param timeSeriesC Third time series (will be split first).
      * @param windowSize, also called `m`, the window size used to traverse all three time series.
      * @param reducer Defines whether to find the highest or lowest correlation.
      *      In practice this is either [MIN] or [MAX]. Defaults to [MAX].
@@ -85,8 +85,6 @@ class StampPearson3ts @JvmOverloads constructor(
      * @param timeSeriesCSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
      *      [timeSeriesC]. It doesn't matter whether [timeSeriesC] has any `NaN`s.
      *
-     * @param overwrite If `true`, then the provided time series might be written to, else they are copied. Defaults to `false`.
-     * @param useQTCache If `true`, then the horizontal sliding dots cache optimization is used. Defaults to `true`.
      * @param lagBound Optional enveloping mechanism. If provided, all window placements are within [lagBound] distance of each other.
      * @param resultCubeCallback Optional matrix that can be provided to be filled with all results.
      *      It's faster when not provided. Matrix must be of dimensions
@@ -115,35 +113,31 @@ class StampPearson3ts @JvmOverloads constructor(
         lagBound: Int? = null,
 
         // get optional result matrix
-        resultCubeCallback: Array<Array<DoubleArray>>? = null,
+        resultCubeCallback: F64Array? = null,
         resultIndexCallback: ((aggregation: AggregationMethod, aIndex: Int, bIndex: Int, cIndex: Int) -> Unit)? = null,
     ): Double = stampPearson3ts(
-        timeSeriesA.asF64Array(),
-        timeSeriesB.asF64Array(),
-        timeSeriesC.asF64Array(),
-        windowSize,
-        reducer,
-        timeSeriesASlidingMeans?.asF64Array(),
-        timeSeriesASlidingStds?.asF64Array(),
-        timeSeriesBSlidingMeans?.asF64Array(),
-        timeSeriesBSlidingStds?.asF64Array(),
-        timeSeriesCSlidingMeans?.asF64Array(),
-        timeSeriesCSlidingStds?.asF64Array(),
-        lagBound,
-        resultCubeCallback?.let {
-            F64Array(it.size, it.first().size, it.first().first().size) { i, j, k ->
-                it[i][j][k]
-            }
-        },
-        resultIndexCallback
+        timeSeriesA = timeSeriesA.asF64Array(),
+        timeSeriesB = timeSeriesB.asF64Array(),
+        timeSeriesC = timeSeriesC.asF64Array(),
+        windowSize = windowSize,
+        reducer = reducer,
+        timeSeriesASlidingMeans = timeSeriesASlidingMeans?.asF64Array(),
+        timeSeriesASlidingStds = timeSeriesASlidingStds?.asF64Array(),
+        timeSeriesBSlidingMeans = timeSeriesBSlidingMeans?.asF64Array(),
+        timeSeriesBSlidingStds = timeSeriesBSlidingStds?.asF64Array(),
+        timeSeriesCSlidingMeans = timeSeriesCSlidingMeans?.asF64Array(),
+        timeSeriesCSlidingStds = timeSeriesCSlidingStds?.asF64Array(),
+        lagBound = lagBound,
+        resultCubeCallback = resultCubeCallback,
+        resultIndexCallback = resultIndexCallback
     )
 
     /**
      * Find the best correlation between 3 time series for each possible window position in each.
      *
-     * @param timeSeriesA First time series (must have the smallest amount of `NaN`s if any).
-     * @param timeSeriesB Second time series (must have the second to smallest amount of `NaN`s if any).
-     * @param timeSeriesC Third time series (will be split first) (must have the largest amount of `NaN`s if any).
+     * @param timeSeriesA First time series.
+     * @param timeSeriesB Second time series.
+     * @param timeSeriesC Third time series (will be split first).
      * @param windowSize, also called `m`, the window size used to traverse all three time series.
      * @param reducer Defines whether to find the highest or lowest correlation.
      *      In practice this is either [MIN] or [MAX]. Defaults to [MAX].
@@ -163,8 +157,6 @@ class StampPearson3ts @JvmOverloads constructor(
      * @param timeSeriesCSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
      *      [timeSeriesC]. It doesn't matter whether [timeSeriesC] has any `NaN`s.
      *
-     * @param overwrite If `true`, then the provided time series might be written to, else they are copied. Defaults to `false`.
-     * @param useQTCache If `true`, then the horizontal sliding dots cache optimization is used. Defaults to `true`.
      * @param lagBound Optional enveloping mechanism. If provided, all window placements are within [lagBound] distance of each other.
      * @param resultCubeCallback Optional matrix that can be provided to be filled with all results.
      *      It's faster when not provided. Matrix must be of dimensions
