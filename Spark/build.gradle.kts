@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    scala
     kotlin("jvm") version "1.6.10"
     application
     java
@@ -10,7 +11,6 @@ group = "nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    mavenCentral()
     mavenCentral()
     maven(url = "https://jitpack.io")
     maven(url = "https://maven.pkg.jetbrains.space/mipt-npm/p/sci/maven")
