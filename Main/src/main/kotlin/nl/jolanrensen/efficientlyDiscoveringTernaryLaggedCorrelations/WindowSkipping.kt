@@ -1,6 +1,5 @@
 package nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations
 
-import nl.jolanrensen.*
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.aggregations.MAX
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampPearson
 import org.jetbrains.bio.viktor.F64FlatArray
@@ -9,14 +8,14 @@ import java.io.Serializable
 import java.util.*
 import kotlin.math.abs
 
-object Continuity : Serializable {
+object WindowSkipping : Serializable {
 
-    class MotifInstance(val data: List<Int>) {
+    internal class MotifInstance(val data: List<Int>) {
         val range = data.first()..data.last()
         override fun toString(): String = data.toString()
     }
 
-    tailrec fun find(parent: IntArray, i: Int): Int = when {
+    internal tailrec fun find(parent: IntArray, i: Int): Int = when {
 
         parent[i] == i || parent[i] == -1 ->
             i
@@ -25,7 +24,7 @@ object Continuity : Serializable {
             find(parent, parent[i])
     }
 
-    fun union(parent: IntArray, x: Int, y: Int) {
+    internal fun union(parent: IntArray, x: Int, y: Int) {
         require(x != y)
         val xSet = find(parent, x)
         val ySet = find(parent, y)
@@ -33,11 +32,20 @@ object Continuity : Serializable {
         parent[xSet] = ySet
     }
 
+    /**
+     * Uses motif detection to remove repeating patterns from [timeSeries].
+     * Too slow to be used well in practice.
+     *
+     * @param timeSeries source and destination array where repeating motifs are marked as skippable.
+     * @param windowSize the window size
+     * @param matrixProfilePrecision the precision (0..1) required for a motif to be recognized as the same.
+     * @param stampPearson (optional) [StampPearson] instance to be used for caches and motif detection.
+     */
     fun removeRepeatingPatterns(
         timeSeries: F64FlatArray,
         windowSize: Int,
         matrixProfilePrecision: Double = 0.9,
-        stampPearson: StampPearson,
+        stampPearson: StampPearson = StampPearson(),
     ) {
         require(timeSeries.length >= 2 && windowSize >= 2)
 
@@ -170,9 +178,9 @@ object Continuity : Serializable {
 //        whileTrue()
     }
 
-
+    // unused
     @Suppress("ReplaceRangeToWithUntil")
-    fun removeContinuity2(
+    internal fun removeContinuity2(
         timeSeries: F64FlatArray,
         windowSize: Int,
         precision: Double = 0.01,
@@ -301,21 +309,23 @@ object Continuity : Serializable {
     }
 
     /**
-     * Removes continuity of slope larger than [windowSize] from the timeSeries by replacing it with [Double.NaN].
+     * Removes continuity of slope 2*[windowSize] or larger from the timeSeries by replacing it with [Double.NaN].
      *
      * If slope touches start, keep only m of end of slope
      * If slope touches end, keep only m of the start of the slope
      * Else keep m - 1 of start and m of end of slope
      *
-     *
-     *
+     * @param timeSeriesSrc the time series from which to take data (is by default also [timeSeriesDest]).
+     * @param windowSize the window size
+     * @param timeSeriesDest (optional, default is [timeSeriesSrc]) the destination array
+     * @param precision (optional, default is 0.0) The error margin for which a section is considered a straight piece.
      */
     @Suppress("ReplaceRangeToWithUntil")
     fun removeStraightLineContinuity(
         timeSeriesSrc: F64FlatArray,
         windowSize: Int,
         timeSeriesDest: F64FlatArray = timeSeriesSrc,
-        precision: Double = 0.001,
+        precision: Double = 0.0,
     ) {
         require(timeSeriesSrc.length >= 2 && windowSize >= 2)
 

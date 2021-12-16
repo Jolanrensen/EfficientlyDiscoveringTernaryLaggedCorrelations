@@ -1,4 +1,4 @@
-@file:Suppress("LocalVariableName")
+@file:Suppress("LocalVariableName", "NAME_SHADOWING")
 
 package nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson
 
@@ -16,13 +16,25 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
- * TODO
+ * Implementation of STAMP-Pearson-3TS. Calculates the best lagged ternary correlation for three time series.
+ *
+ * @param arrayCache (optional) the array cache that is used for this [StampPearson3ts] instance.
+ * @param fourierCache (optional) the [DoubleFFT_1D] instance cache used for this [StampPearson3ts] instance.
  */
 class StampPearson3ts @JvmOverloads constructor(
-    arrayCache: StampArrayCache = StampArrayCache(),
+    arrayCache: StampArrayCache = StampArrayCache(
+        maxSize = 100,
+        slotManager = StampArrayCache.SlotsWithReuse,
+    ),
     fourierCache: MutableMap<Int, DoubleFFT_1D> = mutableMapOf(),
 ) : StampPearson(arrayCache, fourierCache), Serializable {
 
+    /**
+     * @param maxArraySize The size of the largest series put in the algorithms. The array cache automatically enlarges
+     *  if not large enough.
+     * @param slotManager The method of reusing slots in the array cache. Default is [StampArrayCache.SlotsWithReuse].
+     *  Use [StampArrayCache.NoSlots] if [StampPearson3ts] instance is accessed across multiple threads.
+     */
     @JvmOverloads
     constructor(
         maxArraySize: Int,
@@ -49,6 +61,7 @@ class StampPearson3ts @JvmOverloads constructor(
 
     /**
      * Find the best correlation between 3 time series for each possible window position in each.
+     * ([DoubleArray] version)
      *
      * @param timeSeriesA First time series (must have the smallest amount of `NaN`s if any).
      * @param timeSeriesB Second time series (must have the second to smallest amount of `NaN`s if any).
@@ -320,6 +333,7 @@ class StampPearson3ts @JvmOverloads constructor(
             if (reducer.firstIsBetterThanSecond(first = planeResult, second = bestCorrelation)) {
                 bestCorrelation = reducer(bestCorrelation, planeResult)
 
+                @Suppress("SENSELESS_COMPARISON")
                 if (resultIndexCallback != null) { // don't listen to this hint, it's wrong
                     bestAggregation = aggregation
                     bestAIndex = aIndex
@@ -368,8 +382,6 @@ class StampPearson3ts @JvmOverloads constructor(
     ): Double {
         val TA = timeSeriesA
         var TB = timeSeriesB
-
-//        require(TA.all { it.isNotNaN() }) { "timeSeriesA is not allowed to have continuity removed and thus may not contain NaNs." }
 
         val m = queryC.length
         val nA = TA.length
@@ -461,11 +473,6 @@ class StampPearson3ts @JvmOverloads constructor(
                 it -= queryCMean
                 sqrt(it.dot() / it.length)
             }
-//            queryC.copy().let {
-//                it -= queryCMean
-//                sqrt(it.dot() / it.size)
-//            }
-
 
         // reused later in T and agg(Q1, Q2)
         //      where Q1 is from [timeSeriesToBeSplit] and Q2 is [query]
@@ -573,6 +580,7 @@ class StampPearson3ts @JvmOverloads constructor(
             if (reducer.firstIsBetterThanSecond(first = lineResult, second = bestCorrelation)) {
                 bestCorrelation = reducer(bestCorrelation, lineResult)
 
+                @Suppress("SENSELESS_COMPARISON")
                 if (resultIndexCallback != null) { // don't listen to this hint, it's wrong
                     bestAggregation = aggregation
                     bestAIndex = aIndex
@@ -692,7 +700,7 @@ class StampPearson3ts @JvmOverloads constructor(
             aggregationQueries = QB,
             query = arrayCache[QC.length, Slot.U].also {
                 QC.copyTo(it)
-            }, // TODO
+            },
             reducer = reducer,
 
             queryDotAggregationProducts = QBdotQC,
@@ -717,10 +725,6 @@ class StampPearson3ts @JvmOverloads constructor(
         // TA and agg(QB, QC) NOTE, is done without aggregation, but can use the same function
         val b = massPearson(
             timeSeries = TA,
-//            query = QB.copy().also {
-//                it += QC
-//                it /= 2.0
-//            },
             query = arrayCache[QB.length, Slot.N].also {
                 QB.copyTo(it)
                 it += QC
@@ -802,6 +806,4 @@ class StampPearson3ts @JvmOverloads constructor(
 
         return bestCorrelation
     }
-
-
 }

@@ -1,14 +1,14 @@
-@file:Suppress("LocalVariableName")
+@file:Suppress("LocalVariableName", "NAME_SHADOWING")
 
 package nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson
 
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.*
+import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.WindowSkipping.numberOfWindowPlacementsSaved
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.aggregations.AggregationWithReducerWithArgWithCompare
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.aggregations.MAX
-import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.Continuity.numberOfWindowPlacementsSaved
-import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampPearson3tsWithSkipping.AggregationMethod.NONE
-import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampPearson3tsWithSkipping.TimeSeries.*
 import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampArrayCache.Slot
+import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampPearson3tsWithSkipping.ContinuitySkippingType
+import nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson.StampPearson3tsWithSkipping.TimeSeries.*
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.F64FlatArray
 import org.jetbrains.bio.viktor._I
@@ -18,7 +18,13 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
- * TODO
+ * Implementation of STAMP-Pearson-3TS that supports skipping (so, arrays with `NaN` pieces).
+ * Calculates the best lagged ternary correlation for three time series.
+ *
+ * @param continuitySkipping the skipping method used. Currently, only [ContinuitySkippingType.STRAIGHT_LINE] is supported.
+ *  Can be done using [WindowSkipping.removeStraightLineContinuity].
+ * @param arrayCache (optional) the array cache that is used for this [StampPearson3ts] instance.
+ * @param fourierCache (optional) the [DoubleFFT_1D] instance cache used for this [StampPearson3ts] instance.
  */
 class StampPearson3tsWithSkipping @JvmOverloads constructor(
     val continuitySkipping: ContinuitySkippingType,
@@ -26,10 +32,18 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
     fourierCache: MutableMap<Int, DoubleFFT_1D> = mutableMapOf(),
 ) : StampPearson(arrayCache, fourierCache), Serializable {
 
+    /**
+     * @param continuitySkipping the skipping method used. Currently, only [ContinuitySkippingType.STRAIGHT_LINE] is supported.
+     *  Can be done using [WindowSkipping.removeStraightLineContinuity].
+     * @param maxArraySize The size of the largest series put in the algorithms. The array cache automatically enlarges
+     *  if not large enough.
+     * @param slotManager The method of reusing slots in the array cache. Default is [StampArrayCache.SlotsWithReuse].
+     *  Use [StampArrayCache.NoSlots] if [StampPearson3ts] instance is accessed across multiple threads.
+     */
     @JvmOverloads
     constructor(
-        maxArraySize: Int,
         continuitySkipping: ContinuitySkippingType,
+        maxArraySize: Int,
         slotManager: StampArrayCache.SlotManager = StampArrayCache.SlotsWithReuse,
     ) : this(
         continuitySkipping = continuitySkipping,
@@ -39,71 +53,6 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
         ),
     )
 
-    companion object {
-
-        /**
-         * @param
-         * @param endOfSliceIndex exclusive index of end of slice of time series
-         * @return function that can be executed to reverse the fix applied to [timeSeries], `null` if nothing changed.
-         */
-        fun fixRemovedContinuityWithLagBound(
-            timeSeries: F64FlatArray,
-            timeSeriesNoNaN: F64FlatArray,
-            endOfSliceIndex: Int,
-            windowSize: Int,
-            continuitySkipping: ContinuitySkippingType,
-        ): (() -> Unit)? { // TODO this only works for straight lines, not MP
-
-            if (continuitySkipping == ContinuitySkippingType.MATRIX_PROFILE)
-                throw IllegalArgumentException("unsupported")
-
-            if (endOfSliceIndex >= timeSeries.length) {
-                // no fixing necessary
-                return null
-            }
-
-            fun addValueToLeftSideOfNaNs(indexInNaNs: Int): () -> Unit {
-                // find left of NaNs
-                var j = indexInNaNs
-                while (timeSeries[--j].isNaN() && j > 0) Unit
-                j++
-
-//            // find right of NaNs (exclusive)
-//            var k = indexInNaNs
-//            while (timeSeries[++k].isNaN() && k < timeSeries.size - 1) Unit
-//
-//            // add one more value on left side of NaNs based on the slope on the right side
-//            val slope = timeSeries[k + 1] - timeSeries[k]
-//            timeSeries[j] = (k - j + 1) * slope
-                timeSeries[j] = timeSeriesNoNaN[j]
-
-                return {
-                    timeSeries[j] = Double.NaN
-                }
-            }
-
-            if (timeSeries[endOfSliceIndex - 1].isNaN()) {
-                if (timeSeries.sliceFlat(from = endOfSliceIndex - 1, to = timeSeries.length).all { it.isNaN() }) {
-                    // no fixing necessary
-                    return null
-                }
-
-                return addValueToLeftSideOfNaNs(endOfSliceIndex - 1)
-            }
-
-            // if end of slice is next to NaN-piece in the middle of a time series
-            for ((i, value) in timeSeries.sliceFlat(
-                from = (endOfSliceIndex - windowSize).coerceAtLeast(0),
-                to = endOfSliceIndex).withIndex()
-            ) {
-                if (value.isNaN()) {
-                    return addValueToLeftSideOfNaNs(i + 1)
-                }
-            }
-
-            return null
-        }
-    }
 
     enum class ContinuitySkippingType {
         MATRIX_PROFILE, STRAIGHT_LINE
@@ -157,8 +106,6 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
      * @param timeSeriesCSlidingStds Optional optimization. Can be calculated using [StampPearson.computeSlidingMeanStd] of
      *      [timeSeriesC]. It doesn't matter whether [timeSeriesC] has any `NaN`s.
      *
-     * @param overwrite If `true`, then the provided time series might be written to, else they are copied. Defaults to `false`.
-     * @param useQTCache If `true`, then the horizontal sliding dots cache optimization is used. Defaults to `true`.
      * @param lagBound Optional enveloping mechanism. If provided, all window placements are within [lagBound] distance of each other.
      * @param resultCubeCallback Optional matrix that can be provided to be filled with all results.
      *      It's faster when not provided. Matrix must be of dimensions
@@ -188,10 +135,7 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
         timeSeriesCSlidingMeans: F64FlatArray? = null,
         timeSeriesCSlidingStds: F64FlatArray? = null,
 
-//        overwrite: Boolean = false,
-//        useQTCache: Boolean = true,
         lagBound: Int? = null,
-//        skipIndices: List<SkippableIndex>? = null,
 
         // get optional result matrix
         resultCubeCallback: F64Array? = null,
@@ -202,12 +146,6 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
         val TA: F64FlatArray = timeSeriesA
         val TB: F64FlatArray = timeSeriesB
         val TC: F64FlatArray = timeSeriesC
-
-
-//        var timeSeriesAWithoutNaN = timeSeriesAWithoutNaN
-//        var timeSeriesBWithoutNaN = timeSeriesBWithoutNaN
-//        var timeSeriesCWithoutNaN = timeSeriesCWithoutNaN
-
 
         val nanCountA = numberOfWindowPlacementsSaved(TA, m)
         val nanCountB = numberOfWindowPlacementsSaved(TB, m)
@@ -748,7 +686,6 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
         val resultsIndexArray = if (resultIndexCallback == null) null else IntArray(3) { -1 }
 
 
-
         // agg(TA, QB) and QC
         val a = massPearson(
             timeSeries = TA,
@@ -1175,4 +1112,69 @@ class StampPearson3tsWithSkipping @JvmOverloads constructor(
         }
     }
 
+    // These functions don't need any cache, so they are made statically available using Kotlin's companion object.
+    // Access from Java using `StampPearson3tsWithSkipping.Companion.function()`
+    // Access from Kotlin using `StampPearson3tsWithSkipping.function()`
+    companion object {
+
+        /**
+         * This function fixes the combination of window skipping and lag bound.
+         * TODO this only works for straight lines, not MP
+         *
+         * @param timeSeries the time series with `NaN`s
+         * @param timeSeriesNoNaN the original time series without `NaN`s
+         * @param windowSize the window size
+         * @param endOfSliceIndex exclusive index of end of slice of time series
+         * @return function that can be executed to reverse the fix applied to [timeSeries], `null` if nothing changed.
+         */
+        private fun fixRemovedContinuityWithLagBound(
+            timeSeries: F64FlatArray,
+            timeSeriesNoNaN: F64FlatArray,
+            endOfSliceIndex: Int,
+            windowSize: Int,
+            continuitySkipping: ContinuitySkippingType,
+        ): (() -> Unit)? {
+
+            if (continuitySkipping == ContinuitySkippingType.MATRIX_PROFILE)
+                throw IllegalArgumentException("unsupported")
+
+            if (endOfSliceIndex >= timeSeries.length) {
+                // no fixing necessary
+                return null
+            }
+
+            fun addValueToLeftSideOfNaNs(indexInNaNs: Int): () -> Unit {
+                // find left of NaNs
+                var j = indexInNaNs
+                while (timeSeries[--j].isNaN() && j > 0) Unit
+                j++
+
+                timeSeries[j] = timeSeriesNoNaN[j]
+                return {
+                    timeSeries[j] = Double.NaN
+                }
+            }
+
+            if (timeSeries[endOfSliceIndex - 1].isNaN()) {
+                if (timeSeries.sliceFlat(from = endOfSliceIndex - 1, to = timeSeries.length).all { it.isNaN() }) {
+                    // no fixing necessary
+                    return null
+                }
+
+                return addValueToLeftSideOfNaNs(endOfSliceIndex - 1)
+            }
+
+            // if end of slice is next to NaN-piece in the middle of a time series
+            for ((i, value) in timeSeries.sliceFlat(
+                from = (endOfSliceIndex - windowSize).coerceAtLeast(0),
+                to = endOfSliceIndex).withIndex()
+            ) {
+                if (value.isNaN()) {
+                    return addValueToLeftSideOfNaNs(i + 1)
+                }
+            }
+
+            return null
+        }
+    }
 }

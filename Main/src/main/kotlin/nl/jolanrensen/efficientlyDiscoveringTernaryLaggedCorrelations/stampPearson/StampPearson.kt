@@ -1,4 +1,4 @@
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "NAME_SHADOWING")
 
 package nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations.stampPearson
 
@@ -11,15 +11,27 @@ import java.io.Serializable
 import kotlin.math.sqrt
 
 /**
- * Implementation of STAMP from Matrix Profile paper using Mueens similarity search.
- * Calculates Pearson correlation instead of Euclidean distance, but can be easily modified.
+ * Implementation of STAMP from Matrix Profile paper using Mueen's similarity search.
+ * Calculates Pearson correlation instead of Euclidean distance, but can be easily converted using [StampPearson.pearsonCorrelationsToEuclidean].
+ *
+ * @param arrayCache (optional) the array cache that is used for this [StampPearson] instance.
+ * @param fourierCache (optional) the [DoubleFFT_1D] instance cache used for this [StampPearson] instance.
  */
 @Suppress("LocalVariableName")
 open class StampPearson @JvmOverloads constructor(
-    internal val arrayCache: StampArrayCache = StampArrayCache(),
+    internal val arrayCache: StampArrayCache = StampArrayCache(
+        maxSize = 100,
+        slotManager = StampArrayCache.SlotsWithReuse,
+    ),
     internal val fourierCache: MutableMap<Int, DoubleFFT_1D> = mutableMapOf(),
 ) : Serializable {
 
+    /**
+     * @param maxArraySize The size of the largest series put in the algorithms. The array cache automatically enlarges
+     *  if not large enough.
+     * @param slotManager The method of reusing slots in the array cache. Default is [StampArrayCache.SlotsWithReuse].
+     *  Use [StampArrayCache.NoSlots] if [StampPearson] instance is accessed across multiple threads.
+     */
     @JvmOverloads
     constructor(
         maxArraySize: Int,
@@ -409,6 +421,7 @@ open class StampPearson @JvmOverloads constructor(
             if (reducer.firstIsBetterThanSecond(first = lineResult, second = bestCorrelation)) {
                 bestCorrelation = reducer(bestCorrelation, lineResult)
 
+                @Suppress("SENSELESS_COMPARISON")
                 if (resultIndexCallback != null) { // don't listen to this hint, it's wrong
                     bestAIndex = aIndex
                     bestBIndex = queryBIndex
@@ -947,6 +960,9 @@ open class StampPearson @JvmOverloads constructor(
         }
     }
 
+    // These functions don't need any cache, so they are made statically available using Kotlin's companion object.
+    // Access from Java using `StampPearson.Companion.function()`
+    // Access from Kotlin using `StampPearson.function()`
     companion object {
 
         /**
