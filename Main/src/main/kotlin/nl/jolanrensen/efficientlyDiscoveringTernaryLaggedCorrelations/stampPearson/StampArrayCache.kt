@@ -132,14 +132,13 @@ class StampArrayCache(
             SlotsWithReuse, SlotsWithoutReuse ->
                 Slot.values()
                     .map {
-                        Pair(slotManager(it), it in listOf(A, B, B1, B2, B3, B4))
+                        object {
+                            val slotKey = slotManager(it)
+                            val isSlidingDots = it in listOf(A, B, B1, B2, B3, B4)
+                        }
                     }
-                    .associateWith { (_, isSlidingDots) ->
-                        F64FlatArray(
-                            if (isSlidingDots) 2 * nextPowerOf2(maxSize)
-                            else maxSize
-                        )
-                    }.mapKeys { (key, _) -> key.first }
+                    .associateWith { F64FlatArray(if (it.isSlidingDots) 2 * nextPowerOf2(maxSize) else maxSize) }
+                    .mapKeys { (key, _) -> key.slotKey }
                     .toMutableMap()
 
             NoSlots -> mutableMapOf()

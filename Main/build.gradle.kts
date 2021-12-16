@@ -39,7 +39,15 @@ dependencies {
     // regression etc
     implementation(group = "org.nield", name = "kotlin-statistics", version = "1.2.1")
 
-
+    // Arrays, matrices etc
+    val kmathGroup = "space.kscience"
+    val kMathVersion = "0.2.1"
+    api(group = kmathGroup, name = "kmath-core", version = kMathVersion)
+    api(group = kmathGroup, name = "kmath-commons", version = kMathVersion)
+    api(group = kmathGroup, name = "kmath-complex", version = kMathVersion)
+    api(group = kmathGroup, name = "kmath-for-real", version = kMathVersion)
+    api(group = kmathGroup, name = "kmath-dimensions", version = kMathVersion)
+    api(group = kmathGroup, name = "kmath-stat", version = kMathVersion)
 
 }
 
