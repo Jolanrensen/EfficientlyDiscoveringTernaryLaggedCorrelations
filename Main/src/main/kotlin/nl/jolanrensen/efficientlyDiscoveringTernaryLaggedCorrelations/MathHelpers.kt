@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package nl.jolanrensen.efficientlyDiscoveringTernaryLaggedCorrelations
 
 import org.jetbrains.bio.viktor.F64FlatArray

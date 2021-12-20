@@ -25,7 +25,7 @@ import java.time.LocalDate
  * group formation in Apache Spark.
  * (An `object` in Kotlin can be viewed as a singleton)
  */
-object Example : Serializable {
+object ExampleFirstDataset : Serializable {
 
     private lateinit var sc: JavaSparkContext
 
@@ -96,6 +96,7 @@ object Example : Serializable {
             }
             .collectAsList()
 
+        // This dataset contains the dates separately
         val dates: Dataset<LocalDate> = spark
             .read()
             .parquet(datesFileLocation)
