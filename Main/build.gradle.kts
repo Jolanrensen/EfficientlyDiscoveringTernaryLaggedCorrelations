@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.5.32"
     application
     java
 }
@@ -66,7 +66,7 @@ fun KotlinCompile.applyOptions() = kotlinOptions {
         "-Xopt-in=kotlin.ExperimentalStdlibApi",  // buildList etc
     )
     jvmTarget = "11"
-    languageVersion = "1.6"
+    languageVersion = "1.5"
 }
 
 val compileKotlin: KotlinCompile by tasks
