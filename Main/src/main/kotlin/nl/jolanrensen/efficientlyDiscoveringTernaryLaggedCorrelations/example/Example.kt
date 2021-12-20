@@ -22,8 +22,6 @@ import org.jetbrains.bio.viktor.F64FlatArray
 fun main() {
 
     stamp3tsWithSkippingExample()
-
-
 }
 
 /** Gives an example for STAMP-Pearson-3TS with 3 time series. */
@@ -46,8 +44,9 @@ fun stampPearson3tsExample() {
     // then we can provide those to the function as well, to save calculations. If not provided, the function will simply
     // calculate them itself.
     val (timeSeriesBSlidingMeans: F64FlatArray, timeSeriesBSlidingStds: F64FlatArray) = StampPearson.computeSlidingMeanStd(
-        tsB,
-        windowSize)
+        T = tsB,
+        windowSize = windowSize,
+    )
 
     // if we want to debug and get all the correlation calculations, we can provide a 3D array to the function
     // this does make the calculation slower

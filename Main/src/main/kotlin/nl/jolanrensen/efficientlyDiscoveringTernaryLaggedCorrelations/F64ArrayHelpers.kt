@@ -163,6 +163,7 @@ fun <T : F64Array> T.sqrt(): T = copy().apply { sqrtInPlace() } as T
 /**
  * Creates an [F64FlatArray] of given [size] filled with random doubles.
  */
+@JvmOverloads
 fun randomF64FlatArray(size: Int, from: Double? = null, until: Double? = null): F64FlatArray =
     F64FlatArray(size) {
         when {
