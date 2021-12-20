@@ -321,6 +321,7 @@ object WindowSkipping : Serializable {
      * @param precision (optional, default is 0.0) The error margin for which a section is considered a straight piece.
      */
     @Suppress("ReplaceRangeToWithUntil")
+    @JvmOverloads
     fun removeStraightLineContinuity(
         timeSeriesSrc: F64FlatArray,
         windowSize: Int,
