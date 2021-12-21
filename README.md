@@ -15,3 +15,4 @@ For an example of the group-by-key method and how to use STAMP-Pearson-3TS in co
 
 The project is best built using Jetbrains' JDK 11, Gradle 7.2, and needs Kotlin 1.5.32 (due to the Kotlin Spark API's latest version being 1.0.2 atm). 
 This also limits the Scala version to 2.12.14 and Spark version to 3.0.0.
+You can build and run it using the [gradlew](gradlew) file or simply import it as a Gradle project in IntelliJ.
